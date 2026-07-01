@@ -1,3 +1,4 @@
 yfinance
 pandas
 pyTelegramBotAPI
+curl_cffi
