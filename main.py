@@ -2,18 +2,15 @@ import yfinance as yf
 import pandas as pd
 import telebot
 import os
-import requests
+from curl_cffi import requests  # 🚀 改用 curl_cffi 來取代原本的 requests
 from datetime import datetime, timedelta
 
 # 取得環境變數中的 Telegram Token
 TG_TOKEN = os.environ.get('TG_TOKEN')
 bot = telebot.TeleBot(TG_TOKEN)
 
-# 建立一個自訂的請求 Session，偽裝成真實的 Google Chrome 瀏覽器，降低被 Yahoo 封鎖的機率
-session = requests.Session()
-session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-})
+# 🚀 建立超強偽裝 Session，完美模擬 Chrome 瀏覽器的底層特徵
+session = requests.Session(impersonate="chrome")
 
 def get_status(price, reference_price):
     """判斷價格是大於還是小於參考價"""
@@ -21,7 +18,7 @@ def get_status(price, reference_price):
 
 def get_index_data(ticker_symbol, name):
     try:
-        # 將自訂的 session 傳遞給 yfinance
+        # 將完美偽裝的 session 傳遞給 yfinance
         ticker = yf.Ticker(ticker_symbol, session=session)
         df = ticker.history(period="6mo")
         
@@ -98,7 +95,6 @@ def get_index_data(ticker_symbol, name):
         return msg
         
     except Exception as e:
-        # 如果發生錯誤，攔截下來並回傳錯誤訊息，防止機器人當機
         return f"⚠️ <b>{name}</b> ({ticker_symbol}) 獲取失敗：<code>{e}</code>\n------------------------\n"
 
 @bot.message_handler(commands=['start', 'report'])
@@ -121,11 +117,9 @@ def send_report(message):
         bot.send_message(message.chat.id, final_message, parse_mode="HTML")
         
     except Exception as e:
-        # 捕捉最高層級的錯誤
         bot.send_message(message.chat.id, f"❌ 系統發生預期外的錯誤：\n<code>{e}</code>", parse_mode="HTML")
         
     finally:
-        # 無論成功或失敗，都一定會執行這行來刪除「計算中...」的訊息
         try:
             bot.delete_message(message.chat.id, processing_msg.message_id)
         except:
